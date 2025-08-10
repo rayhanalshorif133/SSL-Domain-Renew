@@ -38,3 +38,14 @@ Route::get('signout', [CustomAuthController::class, 'signOut'])->name('signout')
 
 /* New Added Routes */
 Route::get('dashboard', [CustomAuthController::class, 'dashboard'])->middleware(['auth']);
+
+
+// make a route for domain create
+
+Route::group(['middleware' => ['auth'], 'prefix' => 'domain', 'as' => 'domain.'], function () {
+    Route::post('store', [DomainController::class, 'store'])->name('store');
+    Route::put('domain/{domain}', [DomainController::class, 'update'])->name('update');
+    Route::delete('domain/{domain}', [DomainController::class, 'destroy'])->name('destroy');
+});
+
+
