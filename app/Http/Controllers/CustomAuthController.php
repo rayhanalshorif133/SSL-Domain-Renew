@@ -78,6 +78,7 @@ class CustomAuthController extends Controller
         //                     $user = User::where('email', $request->email)->first();
         //                     $access_token = $user->createToken($request->email)->accessToken;
         //                     $result = User::where('email', $request->email)->update(['access_token' => $access_token]);
+
         //  dd($result);
                 //  End remember
                 if ($users->status == 'active') {
