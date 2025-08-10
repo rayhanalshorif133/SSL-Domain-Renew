@@ -4,8 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DomainController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\CustomAuthController;
-
-
+use App\Http\Controllers\HomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,17 +26,12 @@ Route::get('/', function () {
 });
 
 Auth::routes();
+Route::middleware(['auth'])
+    ->get('/home', [HomeController::class, 'index'])
+    ->name('home');
 
-Route::get('login', [CustomAuthController::class, 'index'])->name('login');
-Route::get('home', [CustomAuthController::class, 'customHome'])->name('home');
-Route::post('custom-login', [CustomAuthController::class, 'customLogin'])->name('login.custom');
 
-// Route::get('registration', [CustomAuthController::class, 'registration'])->name('register-user');
-Route::post('custom-registration', [CustomAuthController::class, 'customRegistration'])->name('register.custom');
-Route::get('signout', [CustomAuthController::class, 'signOut'])->name('signout');
 
-/* New Added Routes */
-Route::get('dashboard', [CustomAuthController::class, 'dashboard'])->middleware(['auth']);
 
 
 // make a route for domain create
@@ -47,5 +41,7 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'domain', 'as' => 'domain.']
     Route::put('domain/{domain}', [DomainController::class, 'update'])->name('update');
     Route::delete('domain/{domain}', [DomainController::class, 'destroy'])->name('destroy');
 });
+
+
 
 

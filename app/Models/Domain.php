@@ -15,12 +15,12 @@ class Domain extends Model
      */
     protected $fillable = [
         'name',
-        'content', // Include the content attribute for mass assignment
+        'content',
         'expiry_date',
-        'domain_buyer', // Include the domain buyer attribute for mass assignment
+        'domain_buyer',
         'email_status',
-        'client_email', // Include the client email attribute for mass assignment
-        'status', // Include the status attribute for mass assignment
+        'client_email',
+        'status',
 
 
     ];
