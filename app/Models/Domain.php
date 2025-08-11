@@ -14,14 +14,19 @@ class Domain extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'content',
+        'domain_name',
         'expiry_date',
+        'domain_content',
         'domain_buyer',
-        'email_status',
         'client_email',
+        'type_domain',
+        'email_status',
         'status',
 
 
     ];
+       protected $casts = [
+        'client_email' => 'array', // JSON ↔ array auto convert
+    ];
 }
+

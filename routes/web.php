@@ -26,20 +26,13 @@ Route::get('/', function () {
 });
 
 Auth::routes();
-Route::middleware(['auth'])
-    ->get('/home', [HomeController::class, 'index'])
-    ->name('home');
-
-
-
-
-
-// make a route for domain create
-
-Route::group(['middleware' => ['auth'], 'prefix' => 'domain', 'as' => 'domain.'], function () {
-    Route::post('store', [DomainController::class, 'store'])->name('store');
-    Route::put('domain/{domain}', [DomainController::class, 'update'])->name('update');
-    Route::delete('domain/{domain}', [DomainController::class, 'destroy'])->name('destroy');
+Route::middleware(['auth'])->get('/home', [DomainController::class, 'index'])->name('home');
+    // make a route for domain create
+    Route::group(['middleware' => ['auth'], 'prefix' => 'domain', 'as' => 'domain.'], function () {
+            Route::get('/home/{id?}', [DomainController::class, 'index'])->name('home');
+            Route::post('store', [DomainController::class, 'store'])->name('store');
+            Route::put('domain/{domain}', [DomainController::class, 'update'])->name('update');
+            Route::delete('domain/{domain}', [DomainController::class, 'destroy'])->name('destroy');
 });
 
 

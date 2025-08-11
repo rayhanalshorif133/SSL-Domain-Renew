@@ -1,15 +1,9 @@
 <?php
-
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\Domain;
 use App\Mail\DomainRenewMail;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use Carbon\Carbon;
-
-
-
 
 class SendDomainRenewReminder extends Command
 {
@@ -32,38 +26,50 @@ class SendDomainRenewReminder extends Command
      */
     public function handle()
     {
-        // Get domains that need renewal tomorrow
-        // ✅ আজ থেকে 5 দিন পর যেসব ডোমেইন এক্সপায়ার হচ্ছে
-        $targetDate = \Carbon\Carbon::now()->addDays(10)->toDateString();
-
-
-        $domains = \App\Models\Domain::whereDate('expiry_date','<=', $targetDate)
-                        ->whereNotNull('client_email')
-                        ->where('status', 'active') // ✅ শুধুমাত্র অ্যাক্টিভ ডোমেইনগুলো
-                        ->where('email_status', 'false') // ✅ যাদের ইমেইল স্ট্যাটাস 'false'
-                        ->select('id', 'name', 'client_email', 'expiry_date','email_status', 'status') //
-                        ->orderBy('expiry_date', 'DESC') // ✅ এক্সপায়ার হওয়ার তারিখ অনুযায়ী সাজানো
-                        ->limit(20) // ✅ সর্বোচ্চ 20টি ডোমেইন
-                        ->get();
+        $targetDate = \Carbon\Carbon::now()->addDays(15)->toDateString();
+        $domains = \App\Models\Domain::whereDate('expiration_date', '<=', $targetDate)
+            ->whereNotNull('client_email')
+            ->where('status', 'active')                                                                                  // ✅ শুধুমাত্র অ্যাক্টিভ ডোমেইনগুলো
+            ->select('id', 'domain_name', 'client_email', 'domain_content', 'expiration_date', 'domain_buyer', 'status') //
+            ->orderBy('expiration_date', 'DESC')                                                                         // ✅ এক্সপায়ার হওয়ার তারিখ অনুযায়ী সাজানো
+            ->limit(20)                                                                                                  // ✅ সর্বোচ্চ 20টি ডোমেইন
+            ->get();
 
         // dd($domains);
 
         if ($domains->isNotEmpty()) {
-            foreach ($domains as $domain) {
-                    $emails = json_decode($domain->client_email, true);
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        dd('JSON Error: ' . json_last_error_msg());
-                    }
-                foreach ($emails as $email) {
-                    Mail::to($email)->send(new DomainRenewMail($domain));
-                }
-                $domain->update(['email_status' => 'true']);
 
-                $this->info("✅ Email sent and status updated for domain: {$domain->name}");
+            foreach ($domains as $domain) {
+                $emails = is_string($domain->client_email) ? json_decode($domain->client_email, true) : $domain->client_email; // যদি আগেই array হয়
+
+                if (! is_array($emails)) {
+                    $this->error("⚠️ Invalid client_email format for domain: {$domain->domain_name}");
+                    continue;
+                }
+
+                foreach ($emails as $emailData) {
+                    $recipient = $emailData['value'] ?? null;
+
+                    if ($recipient && filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+                        try {
+                            Mail::to($recipient)->send(new DomainRenewMail($domain));
+                            $this->info("📧 Email sent to: {$recipient}");
+                        } catch (\Exception $e) {
+                            $this->error("❌ Failed to send email to {$recipient}: " . $e->getMessage());
+                        }
+                    } else {
+                        $this->error("⚠️ Invalid email skipped: " . json_encode($emailData));
+                    }
+                }
+
+                try {
+                    $domain->update(['email_status' => 'true']);
+                    $this->info("✅ Email status updated for domain: {$domain->domain_name}");
+                } catch (\Exception $e) {
+                    $this->error("❌ Failed to update email_status for domain {$domain->domain_name}: " . $e->getMessage());
+                }
             }
-            if ($domains->isEmpty()) {
-            $this->info('No reminders to send today.');
-        }
+
         } else {
             $this->info("No domains need renewal.");
         }
