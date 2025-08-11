@@ -79,7 +79,6 @@
 
 
 
-                                    <!-- Edit বাটন (উদাহরণ) -->
                                     <button type="button" class="btn btn-primary btn-sm"
                                         onclick='openEditModal(@json($domain))'>
                                         <i class="fas fa-pen"></i>
@@ -194,6 +193,8 @@
 </script>
 
 <script>
+
+
     // Insert Mode
     function openAddModal() {
         $('#domainModalLabel').text('Create New Domain or SSL');
@@ -215,9 +216,8 @@
         $('#expirationDate').val(domain.expiration_date);
         $('#domainBuyer').val(domain.domain_buyer);
         $('#typeDomain').val(domain.type_domain);
-        // Tagify reset করে ডেটা সেট করা
         tagify.removeAllTags();
-        tagify.addTags([domain.client_email]);
+        tagify.addTags(domain.client_email);
         $('#email_status').val(domain.email_status);
         $('#status').val(domain.status);
         $('#saveBtn').text('Update');
