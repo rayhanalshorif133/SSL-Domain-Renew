@@ -1,19 +1,41 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Mail\DomainRenewMail;
 use App\Models\Domain;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class DomainController extends Controller
 {
     public function index($id = null)
     {
-        $domainContents = \App\Models\Domain::orderBy('id', 'desc')->get(); // সব রেকর্ড আনবে
+
+        $latestDomains = \App\Models\Domain::orderBy('expiration_date', 'asc')
+            ->where('status', 'active')
+            ->whereNotNull('client_email')
+            ->take(3)
+            ->get(['domain_name', 'expiration_date']);
+        return view('dashboard', compact('latestDomains'));
+    }
+
+    // public function dashboard($id = null)
+    // {
+    //     dd("dashboard");
+    //      $domainContents = \App\Models\Domain::orderBy('id', 'desc')->get(); // সব রেকর্ড আনবে
+    //     $editDomain     = $id ? Domain::findOrFail($id) : null;
+
+    //     return view('home', compact('domainContents', 'editDomain'));
+    // }
+
+    public function domain_list($id = null)
+    {
+
+        $domainContents = \App\Models\Domain::orderBy('id', 'desc')->get();
         $editDomain     = $id ? Domain::findOrFail($id) : null;
 
         return view('home', compact('domainContents', 'editDomain'));
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -108,12 +130,114 @@ class DomainController extends Controller
                 'status'          => $validated['status'],
             ]);
 
-            return redirect()->route('home')->with('success', 'Domain updated successfully!');
+            return redirect()->route('domain_list')->with('success', 'Domain updated successfully!');
         } catch (\Exception $e) {
             // Handle the error
             return redirect()->back()->with('error', 'Failed to update domain: ' . $e->getMessage());
         }
     }
+
+    public function sendDomainMail($id)
+    {
+        if (! auth()->check()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        try {
+            $domain = Domain::findOrFail($id);
+
+            $emails = is_string($domain->client_email)
+            ? json_decode($domain->client_email, true)
+            : $domain->client_email;
+
+            if (! is_array($emails)) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Invalid client_email format.',
+                ], 422);
+            }
+
+            if ($domain->email_status === 'true') {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Email already sent for this domain.',
+                ], 400);
+            }
+
+            $mailSent = false;
+
+            foreach ($emails as $emailData) {
+                $recipient = $emailData['value'] ?? null;
+
+                if ($recipient && filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+                    try {
+                        Mail::to($recipient)->send(new DomainRenewMail($domain));
+                        $mailSent = true;
+                    } catch (\Exception $e) {
+                        return response()->json([
+                            'status'  => 'error',
+                            'message' => 'Failed to send email: ' . $e->getMessage(),
+                        ], 500);
+                    }
+                }
+            }
+
+            if ($mailSent) {
+                $domain->update(['email_status' => 'true']);
+
+                return response()->json([
+                    'status'  => 'success',
+                    'message' => 'Mail sent successfully!',
+                ]);
+            }
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No valid email addresses found.',
+            ], 400);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Error: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+//     public function sendDomainMail($id)
+//     {
+//         if (!auth()->check()) {
+//             abort(403, 'Unauthorized action.');
+//         }
+//         $domain = Domain::findOrFail($id);
+
+//         $emails = is_string($domain->client_email)
+//             ? json_decode($domain->client_email, true)
+//             : $domain->client_email;
+
+//         if (! is_array($emails)) {
+//             return response()->json(['status' => 'error', 'message' => 'Invalid client_email format']);
+//         }
+// if($domain->email_status === 'false') {
+//         foreach ($emails as $emailData) {
+//             $recipient = $emailData['value'] ?? null;
+
+//             if ($recipient && filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+//                 try {
+//                     Mail::to($recipient)->send(new DomainRenewMail($domain));
+//                 } catch (\Exception $e) {
+//                     return response()->json(['status' => 'error', 'message' => $e->getMessage()]);
+//                 }
+//             }
+//         }
+
+//         $domain->update(['email_status' => 'true']);
+
+//          return response()->json(['status' => 'success', 'message' => 'Mail sent successfully!']);
+//     }else{
+//         return response()->json(['status' => 'error', 'message' => 'Mail not sent: Email status is false']);
+//     }
+//     }
 
     /**
      * Remove the specified resource from storage.
@@ -121,6 +245,7 @@ class DomainController extends Controller
     public function destroy(Domain $domain)
     {
         $domain->delete();
-        return redirect()->back()->with('success', 'Domain deleted successfully!');
+        return redirect()->route('home');
+        // return redirect()->back()->with('success', 'Domain deleted successfully!');
     }
 }

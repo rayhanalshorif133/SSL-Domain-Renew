@@ -19,20 +19,23 @@ use App\Http\Controllers\HomeController;
 
 Route::get('/', function () {
     if(Auth::check()){
-        return redirect()->route('home');
+        return redirect()->route('dashboard');
     }else{
         return redirect()->route('login');
     }
 });
-
 Auth::routes();
-Route::middleware(['auth'])->get('/home', [DomainController::class, 'index'])->name('home');
-    // make a route for domain create
-    Route::group(['middleware' => ['auth'], 'prefix' => 'domain', 'as' => 'domain.'], function () {
-            Route::get('/home/{id?}', [DomainController::class, 'index'])->name('home');
-            Route::post('store', [DomainController::class, 'store'])->name('store');
-            Route::put('domain/{domain}', [DomainController::class, 'update'])->name('update');
-            Route::delete('domain/{domain}', [DomainController::class, 'destroy'])->name('destroy');
+Route::middleware(['auth'])->get('/dashboard', [DomainController::class, 'index'])->name('dashboard');
+Route::get('/home', [DomainController::class, 'index'])->name('home');
+Route::get('/domain_list', [DomainController::class, 'domain_list'])->name('domain_list');
+// make a route for domain create
+Route::group(['middleware' => ['auth'], 'prefix' => 'domain', 'as' => 'domain.'], function () {
+    Route::get('/domain_list/{id?}', [DomainController::class, 'domain_list'])->name('domain_list');
+    // Route::get('/home/{id?}', [DomainController::class, 'index'])->name('home');
+    Route::post('store', [DomainController::class, 'store'])->name('store');
+    Route::put('domain/{domain}', [DomainController::class, 'update'])->name('update');
+    Route::post('/send-domain-mail/{id}', [DomainController::class, 'sendDomainMail'])->name('mail');
+Route::delete('domain/{domain}', [DomainController::class, 'destroy'])->name('destroy');
 });
 
 

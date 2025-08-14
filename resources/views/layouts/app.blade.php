@@ -73,10 +73,10 @@
                                     class="fas fa-bars"></i></a>
                         </li> --}}
                         <li class="nav-item">
-                            <a href="{{ route('home') }}" class="nav-link">Dashboard</a>
+                            <a href="{{ route('dashboard') }}" class="nav-link">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('home') }}" class="nav-link">Domain Management</a>
+                            <a href="{{ route('domain_list') }}" class="nav-link">Domain Management</a>
                         </li>
 
                     </ul>
@@ -790,18 +790,7 @@
 
         <div class="content-wrapper">
             <!-- Content Header (Page header) -->
-            <div class="content-header">
-                <div class="container">
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <h1 class="m-0"> Domain List</h1>
-                        </div><!-- /.col -->
-                        <div class="col-sm-6">
 
-                        </div><!-- /.col -->
-                    </div><!-- /.row -->
-                </div><!-- /.container-fluid -->
-            </div>
             <!-- /.content-header -->
             @yield('content')
         </div>
