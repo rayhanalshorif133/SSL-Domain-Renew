@@ -16,7 +16,17 @@ class DomainController extends Controller
             ->whereNotNull('client_email')
             ->take(3)
             ->get(['domain_name', 'expiration_date']);
-        return view('dashboard', compact('latestDomains'));
+
+        // মোট সংখ্যা
+        $totalDomains = \App\Models\Domain::orderBy('expiration_date', 'asc')
+            ->where('status', 'active')
+            ->whereNotNull('client_email')
+            ->count();
+
+            // শুধু ৩ পর্যন্ত সীমাবদ্ধ
+        $totalDomains = min($totalDomains, 3);
+
+        return view('dashboard', compact('latestDomains', 'totalDomains'));
     }
 
     // public function dashboard($id = null)
